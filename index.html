@@ -85,17 +85,22 @@
         let currentBalance = 0;
 
         try {
-            const tg = window.Telegram.WebApp;
+            // ИСПРАВЛЕНО: Строго слитное и точное написание объекта Telegram
+            const tg = window.Telegram ? window.Telegram.WebApp : null;
+            
             if (tg) {
                 tg.ready();
                 tg.expand();
+            } else {
+                debug.style.color = "#ffaa00";
+                debug.innerText = "Предупреждение: Запущено вне Telegram";
             }
 
-            // Загрузка баланса с защитой от сбоев
+            // Безопасная загрузка баланса
             try {
                 currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
             } catch(e) {
-                debug.innerText = "Ошибка памяти: " + e.message;
+                debug.innerText = "Ошибка локальной памяти: " + e.message;
             }
             
             const balanceDisplay = document.getElementById('balance-val');
@@ -103,24 +108,26 @@
 
             balanceDisplay.innerText = currentBalance;
 
-            // Клик
-            coinButton.addEventListener('click', () => {
+            // Логика клика
+            coinButton.addEventListener('click', (e) => {
                 try {
+                    // Дополнительный запрет на системный зум и подсветку при тапе
+                    e.preventDefault(); 
+                    
                     currentBalance++;
                     balanceDisplay.innerText = currentBalance;
                     localStorage.setItem('clicker_score', currentBalance);
                     
+                    // Вибрация
                     if (tg && tg.HapticFeedback) {
                         tg.HapticFeedback.impactOccurred('medium');
                     }
                 } catch(clickErr) {
-                    debug.innerText = "Ошибка клика: " + clickErr.message;
+                    debug.innerText = "Ошибка при клике: " + clickErr.message;
                 }
             });
 
         } catch(mainErr) {
-            debug.innerText = "Критическая ошибка: " + mainErr.message;
+            debug.innerText = "Критическая ошибка скрипта: " + mainErr.message;
         }
     </script>
-</body>
-</html>
