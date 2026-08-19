@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Crypto Clicker v7.0</title>
+    <title>Crypto Clicker v8.0</title>
     <script src="https://telegram.org"></script>
     <style>
         * {
@@ -13,60 +13,13 @@
             user-select: none !important;
             outline: none !important;
         }
-        body {
-            background-color: #111116;
-            color: #ffffff;
-            font-family: sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #score-text {
-            font-size: 46px;
-            font-weight: bold;
-            color: #ffcc00;
-            margin-bottom: 30px;
-        }
-        #coin-btn {
-            width: 190px;
-            height: 190px;
-            background: linear-gradient(145deg, #ffb300, #e68a00);
-            border: 6px solid #ffcc00;
-            border-radius: 50%;
-            font-size: 85px;
-            cursor: pointer;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 12px 25px rgba(255, 153, 0, 0.35);
-            margin: 0 auto;
-            transition: transform 0.05s ease;
-        }
-        #coin-btn:active {
-            transform: scale(0.92);
-        }
-        .hint {
-            color: #aaaaaa;
-            font-size: 13px;
-            margin-top: 40px;
-        }
-        #debug-log {
-            color: #ffaa00;
-            font-size: 12px;
-            margin-top: 15px;
-        }
+        body { background-color: #111116; color: #ffffff; font-family: sans-serif; text-align: center; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .container { width: 100%; max-width: 400px; padding: 20px; box-sizing: border-box; }
+        #score-text { font-size: 46px; font-weight: bold; color: #ffcc00; margin-bottom: 30px; }
+        #coin-btn { width: 190px; height: 190px; background: linear-gradient(145deg, #ffb300, #e68a00); border: 6px solid #ffcc00; border-radius: 50%; font-size: 85px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; box-shadow: 0 12px 25px rgba(255, 153, 0, 0.35); margin: 0 auto; transition: transform 0.05s ease; }
+        #coin-btn:active { transform: scale(0.92); }
+        .hint { color: #aaaaaa; font-size: 13px; margin-top: 40px; }
+        #debug-log { color: #ffaa00; font-size: 12px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -74,7 +27,7 @@
     <div class="container">
         <div id="score-text">💰 <span id="balance-val">0</span></div>
         <div id="coin-btn">🪙</div>
-        <p class="hint">v7.0 • Синхронизация баланса</p>
+        <p class="hint">v8.0 • Авто-синхронизация</p>
         <div id="debug-log">Инициализация...</div>
     </div>
 
@@ -84,55 +37,58 @@
         const coinButton = document.getElementById('coin-btn');
         
         let currentBalance = 0;
-        let tg = null;
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        let userId = 0;
+
+        // КУДА ШЛЕМ ДАННЫЕ: Вставь сюда домен твоего проекта из Amvera (раздел "Инфо" / "Домен")
+        const SERVER_API = "https://clickertest999-frozen12123.amvera.io";
 
         try {
             currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
             balanceDisplay.innerText = currentBalance;
 
-            if (window.Telegram && window.Telegram.WebApp) {
-                tg = window.Telegram.WebApp;
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                userId = tg.initDataUnsafe.user.id;
                 tg.ready();
                 tg.expand();
-                debug.innerText = "Подключено к Telegram!";
-
-                # Пытаемся подтянуть баланс из Облака Telegram, если локальный кэш пуст
-                if (tg.CloudStorage) {
-                    tg.CloudStorage.getItem('user_balance', (err, value) => {
-                        if (!err && value) {
-                            currentBalance = parseInt(value);
-                            balanceDisplay.innerText = currentBalance;
-                            localStorage.setItem('clicker_score', currentBalance);
-                        }
-                    });
-                }
+                debug.innerText = "Синхронизация с сервером активна!";
             } else {
-                debug.innerText = "Автономный режим браузера";
+                debug.innerText = "Автономный режим (вне Telegram)";
             }
         } catch(initErr) {
             debug.innerText = "Ошибка старта: " + initErr.message;
         }
 
-        coinButton.onclick = function(e) {
+        // Функция отправки баланса на Amvera
+        async def saveToServer(score) {
+            if (!userId) return;
             try {
-                if (e) e.preventDefault();
-                
-                currentBalance++;
-                balanceDisplay.innerText = currentBalance;
-                localStorage.setItem('clicker_score', currentBalance);
-                
-                # Мгновенно отправляем баланс в облако Telegram
-                if (tg && tg.CloudStorage) {
-                    tg.CloudStorage.setItem('user_balance', currentBalance.toString());
-                }
-                
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-            } catch(clickErr) {
-                debug.innerText = "Ошибка клика: " + clickErr.message;
+                await fetch(SERVER_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, score: score })
+                });
+            } catch(e) {}
+        }
+
+        coinButton.onclick = function(e) {
+            if (e) e.preventDefault();
+            currentBalance++;
+            balanceDisplay.innerText = currentBalance;
+            localStorage.setItem('clicker_score', currentBalance);
+            
+            // Отправляем данные на сервер при каждом 5-м клике, чтобы не спамить сеть
+            if (currentBalance % 5 === 0) {
+                saveToServer(currentBalance);
+            }
+            
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
             }
         };
+
+        // Точечное сохранение при выходе
+        window.onbeforeunload = () => { saveToServer(currentBalance); };
     </script>
 </body>
 </html>
