@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Crypto Clicker</title>
+    <!-- Официальный скрипт Telegram -->
+    <script src="https://telegram.org"></script>
+    <style>
+        body {
+            background-color: #111116;
+            color: #ffffff;
+            font-family: sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #score-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 30px;
+        }
+        /* Делаем монету максимально простой и заметной */
+        #coin-btn {
+            width: 180px;
+            height: 180px;
+            background-color: #ff9900;
+            border: 8px solid #ffcc00;
+            border-radius: 50%;
+            font-size: 70px;
+            color: white;
+            cursor: pointer;
+            outline: none;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(255, 153, 0, 0.4);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #coin-btn:active {
+            transform: scale(0.92);
+            background-color: #e68a00;
+        }
+        .hint {
+            color: #aaaaaa;
+            font-size: 14px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="score-text">💰 <span id="balance-val">0</span></div>
+        
+        <!-- Кнопка-монета теперь сделана через стандартный тег button -->
+        <button id="coin-btn">🪙</button>
+        
+        <p class="hint">Нажимай на монету прямо на экране!</p>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        
+        // Пытаемся сообщить Telegram, что мы готовы к отображению
+        try {
+            tg.ready();
+            tg.expand();
+        } catch(e) {
+            console.log("Запущено вне Telegram");
+        }
+
+        // Загружаем сохраненный баланс
+        let currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
+        
+        const balanceDisplay = document.getElementById('balance-val');
+        const coinButton = document.getElementById('coin-btn');
+
+        // Отображаем баланс при старте
+        balanceDisplay.innerText = currentBalance;
+
+        // Обработка клика
+        coinButton.addEventListener('click', () => {
+            currentBalance++;
+            balanceDisplay.innerText = currentBalance;
+            localStorage.setItem('clicker_score', currentBalance);
+            
+            // Вибрация (работает только внутри Telegram)
+            try {
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            } catch(e) {}
+        });
+
+        // Отправка данных боту при закрытии
+        window.addEventListener('beforeunload', () => {
+            try {
+                tg.sendData(JSON.stringify({ score: currentBalance }));
+            } catch(e) {}
+        });
+    </script>
+</body>
+</html>
