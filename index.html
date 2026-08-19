@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Crypto Clicker v5.0</title>
+    <title>Crypto Clicker v6.0</title>
     <script src="https://telegram.org"></script>
     <style>
         * {
@@ -74,8 +74,8 @@
     <div class="container">
         <div id="score-text">💰 <span id="balance-val">0</span></div>
         <div id="coin-btn">🪙</div>
-        <p class="hint">v5.0 • Перезапуск ядра</p>
-        <div id="debug-log">Загрузка ядра...</div>
+        <p class="hint">v6.0 • Ядро запущено напрямую</p>
+        <div id="debug-log">Инициализация...</div>
     </div>
 
     <script>
@@ -84,46 +84,41 @@
         const coinButton = document.getElementById('coin-btn');
         
         let currentBalance = 0;
+        let tg = null;
 
-        function startEngine() {
-            try {
-                currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
-                balanceDisplay.innerText = currentBalance;
-                debug.innerText = "Система активна и готова к тапам!";
+        // Скрипт выполняется сразу, не дожидаясь загрузки картинок
+        try {
+            currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
+            balanceDisplay.innerText = currentBalance;
 
-                let tg = null;
-                if (window.Telegram && window.Telegram.WebApp) {
-                    tg = window.Telegram.WebApp;
-                    tg.ready();
-                    tg.expand();
-                    debug.innerText = "Подключено к Telegram!";
-                } else {
-                    debug.innerText = "Автономный режим браузера";
-                }
-
-                coinButton.onclick = function(e) {
-                    try {
-                        if (e) e.preventDefault();
-                        
-                        currentBalance++;
-                        balanceDisplay.innerText = currentBalance;
-                        localStorage.setItem('clicker_score', currentBalance);
-                        
-                        if (tg && tg.HapticFeedback) {
-                            tg.HapticFeedback.impactOccurred('medium');
-                        }
-                    } catch(clickErr) {
-                        debug.innerText = "Ошибка клика: " + clickErr.message;
-                    }
-                };
-
-            } catch(mainErr) {
-                debug.innerText = "Критическая ошибка: " + mainErr.message;
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.expand();
+                debug.innerText = "Подключено к Telegram!";
+            } else {
+                debug.innerText = "Автономный режим браузера";
             }
+        } catch(initErr) {
+            debug.innerText = "Ошибка старта: " + initErr.message;
         }
 
-        // ИСПРАВЛЕНО: Правильный комментарий JavaScript
-        window.onload = startEngine;
+        // Логика тапа привязана напрямую
+        coinButton.onclick = function(e) {
+            try {
+                if (e) e.preventDefault();
+                
+                currentBalance++;
+                balanceDisplay.innerText = currentBalance;
+                localStorage.setItem('clicker_score', currentBalance);
+                
+                if (tg && tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            } catch(clickErr) {
+                debug.innerText = "Ошибка клика: " + clickErr.message;
+            }
+        };
     </script>
 </body>
 </html>
