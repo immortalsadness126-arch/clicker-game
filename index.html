@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Crypto Clicker v6.0</title>
+    <title>Crypto Clicker v7.0</title>
     <script src="https://telegram.org"></script>
     <style>
         * {
@@ -74,7 +74,7 @@
     <div class="container">
         <div id="score-text">💰 <span id="balance-val">0</span></div>
         <div id="coin-btn">🪙</div>
-        <p class="hint">v6.0 • Ядро запущено напрямую</p>
+        <p class="hint">v7.0 • Синхронизация баланса</p>
         <div id="debug-log">Инициализация...</div>
     </div>
 
@@ -86,7 +86,6 @@
         let currentBalance = 0;
         let tg = null;
 
-        // Скрипт выполняется сразу, не дожидаясь загрузки картинок
         try {
             currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
             balanceDisplay.innerText = currentBalance;
@@ -96,6 +95,17 @@
                 tg.ready();
                 tg.expand();
                 debug.innerText = "Подключено к Telegram!";
+
+                # Пытаемся подтянуть баланс из Облака Telegram, если локальный кэш пуст
+                if (tg.CloudStorage) {
+                    tg.CloudStorage.getItem('user_balance', (err, value) => {
+                        if (!err && value) {
+                            currentBalance = parseInt(value);
+                            balanceDisplay.innerText = currentBalance;
+                            localStorage.setItem('clicker_score', currentBalance);
+                        }
+                    });
+                }
             } else {
                 debug.innerText = "Автономный режим браузера";
             }
@@ -103,7 +113,6 @@
             debug.innerText = "Ошибка старта: " + initErr.message;
         }
 
-        // Логика тапа привязана напрямую
         coinButton.onclick = function(e) {
             try {
                 if (e) e.preventDefault();
@@ -111,6 +120,11 @@
                 currentBalance++;
                 balanceDisplay.innerText = currentBalance;
                 localStorage.setItem('clicker_score', currentBalance);
+                
+                # Мгновенно отправляем баланс в облако Telegram
+                if (tg && tg.CloudStorage) {
+                    tg.CloudStorage.setItem('user_balance', currentBalance.toString());
+                }
                 
                 if (tg && tg.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred('medium');
