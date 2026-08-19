@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Crypto Clicker v8.0</title>
+    <title>Crypto Clicker v9.0</title>
     <script src="https://telegram.org"></script>
     <style>
         * {
@@ -27,7 +27,7 @@
     <div class="container">
         <div id="score-text">💰 <span id="balance-val">0</span></div>
         <div id="coin-btn">🪙</div>
-        <p class="hint">v8.0 • Авто-синхронизация</p>
+        <p class="hint">v9.0 • Авто-синхронизация</p>
         <div id="debug-log">Инициализация...</div>
     </div>
 
@@ -40,8 +40,22 @@
         let tg = window.Telegram ? window.Telegram.WebApp : null;
         let userId = 0;
 
-        // КУДА ШЛЕМ ДАННЫЕ: Вставь сюда домен твоего проекта из Amvera (раздел "Инфо" / "Домен")
+        // Вставь сюда ссылку, которую ты увидел во вкладке "Домены" на Amvera!
         const SERVER_API = "https://clickertest999-frozen12123.amvera.io";
+
+        // Функция отправки баланса (ИСПРАВЛЕНО: async function вместо async def)
+        async function saveToServer(score) {
+            if (!userId) return;
+            try {
+                await fetch(SERVER_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, score: score })
+                });
+            } catch(e) {
+                console.log("Ошибка сети:", e);
+            }
+        }
 
         try {
             currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
@@ -59,25 +73,13 @@
             debug.innerText = "Ошибка старта: " + initErr.message;
         }
 
-        // Функция отправки баланса на Amvera
-        async def saveToServer(score) {
-            if (!userId) return;
-            try {
-                await fetch(SERVER_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, score: score })
-                });
-            } catch(e) {}
-        }
-
         coinButton.onclick = function(e) {
             if (e) e.preventDefault();
             currentBalance++;
             balanceDisplay.innerText = currentBalance;
             localStorage.setItem('clicker_score', currentBalance);
             
-            // Отправляем данные на сервер при каждом 5-м клике, чтобы не спамить сеть
+            // Отправляем данные на сервер при каждом 5-м клике
             if (currentBalance % 5 === 0) {
                 saveToServer(currentBalance);
             }
@@ -87,7 +89,7 @@
             }
         };
 
-        // Точечное сохранение при выходе
+        // Сохранение при закрытии приложения
         window.onbeforeunload = () => { saveToServer(currentBalance); };
     </script>
 </body>
