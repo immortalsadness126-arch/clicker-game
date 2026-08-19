@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Crypto Clicker</title>
-    <!-- Официальный скрипт Telegram -->
     <script src="https://telegram.org"></script>
     <style>
         body {
@@ -19,6 +18,10 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            /* Запрещаем выделение текста и элементов на всей странице */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
         .container {
             width: 100%;
@@ -27,12 +30,12 @@
             box-sizing: border-box;
         }
         #score-text {
-            font-size: 36px;
+            font-size: 38px;
             font-weight: bold;
             color: #ffcc00;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
         }
-        /* Делаем монету максимально простой и заметной */
         #coin-btn {
             width: 180px;
             height: 180px;
@@ -46,9 +49,12 @@
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 10px 20px rgba(255, 153, 0, 0.4);
-            user-select: none;
-            -webkit-user-select: none;
+            box-shadow: 0 10px 25px rgba(255, 153, 0, 0.4);
+            
+            /* ХАК: Полностью убираем синий квадрат и любые выделения при тапе */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            outline: none !important;
         }
         #coin-btn:active {
             transform: scale(0.92);
@@ -57,7 +63,8 @@
         .hint {
             color: #aaaaaa;
             font-size: 14px;
-            margin-top: 40px;
+            margin-top: 45px;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -65,52 +72,40 @@
 
     <div class="container">
         <div id="score-text">💰 <span id="balance-val">0</span></div>
-        
-        <!-- Кнопка-монета теперь сделана через стандартный тег button -->
         <button id="coin-btn">🪙</button>
-        
-        <p class="hint">Нажимай на монету прямо на экране!</p>
+        <p class="hint">Нажимай на монету, баланс сохранится автоматически!</p>
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
         const tg = window.Telegram.WebApp;
         
-        // Пытаемся сообщить Telegram, что мы готовы к отображению
         try {
             tg.ready();
             tg.expand();
-        } catch(e) {
-            console.log("Запущено вне Telegram");
-        }
+        } catch(e) {}
 
-        // Загружаем сохраненный баланс
+        // Загружаем сохраненный баланс из локального хранилища устройства
         let currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
         
         const balanceDisplay = document.getElementById('balance-val');
         const coinButton = document.getElementById('coin-btn');
 
-        // Отображаем баланс при старте
+        // Сразу отображаем баланс при входе
         balanceDisplay.innerText = currentBalance;
 
-        // Обработка клика
+        // Логика клика
         coinButton.addEventListener('click', () => {
             currentBalance++;
             balanceDisplay.innerText = currentBalance;
+            
+            // Надежное мгновенное сохранение в память телефона
             localStorage.setItem('clicker_score', currentBalance);
             
-            // Вибрация (работает только внутри Telegram)
+            // Тактильный отклик (вибрация) внутри Telegram
             try {
                 if (tg.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred('medium');
                 }
-            } catch(e) {}
-        });
-
-        // Отправка данных боту при закрытии
-        window.addEventListener('beforeunload', () => {
-            try {
-                tg.sendData(JSON.stringify({ score: currentBalance }));
             } catch(e) {}
         });
     </script>
