@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Crypto Clicker v4.0</title>
-    
-    <!-- Переместили наверх и добавили принудительную синхронную загрузку -->
+    <title>Crypto Clicker v5.0</title>
     <script src="https://telegram.org"></script>
-    
     <style>
-        /* Жесткое и бескомпромиссное отключение синей рамки и выделений на уровне всех браузеров */
         * {
             -webkit-tap-highlight-color: transparent !important;
             -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
@@ -43,7 +39,6 @@
             color: #ffcc00;
             margin-bottom: 30px;
         }
-        /* Обычный блок DIV вместо BUTTON — у него физически нет синей рамки при фокусе */
         #coin-btn {
             width: 190px;
             height: 190px;
@@ -79,7 +74,7 @@
     <div class="container">
         <div id="score-text">💰 <span id="balance-val">0</span></div>
         <div id="coin-btn">🪙</div>
-        <p class="hint">v4.0 • Система перезапущена</p>
+        <p class="hint">v5.0 • Перезапуск ядра</p>
         <div id="debug-log">Загрузка ядра...</div>
     </div>
 
@@ -90,26 +85,22 @@
         
         let currentBalance = 0;
 
-        // Главная функция, которая запустится в любом случае
         function startEngine() {
             try {
-                // Загружаем баланс из памяти телефона
                 currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
                 balanceDisplay.innerText = currentBalance;
                 debug.innerText = "Система активна и готова к тапам!";
 
-                // Пытаемся безопасно подключить Telegram WebApp
                 let tg = null;
                 if (window.Telegram && window.Telegram.WebApp) {
                     tg = window.Telegram.WebApp;
                     tg.ready();
                     tg.expand();
-                    debug.innerText = "Успешно подключено к Telegram!";
+                    debug.innerText = "Подключено к Telegram!";
                 } else {
-                    debug.innerText = "Работа в автономном режиме браузера";
+                    debug.innerText = "Автономный режим браузера";
                 }
 
-                // Логика клика (работает ВСЕГДА, даже если Телеграм еще не загрузился)
                 coinButton.onclick = function(e) {
                     try {
                         if (e) e.preventDefault();
@@ -118,7 +109,6 @@
                         balanceDisplay.innerText = currentBalance;
                         localStorage.setItem('clicker_score', currentBalance);
                         
-                        // Мягкая вибрация
                         if (tg && tg.HapticFeedback) {
                             tg.HapticFeedback.impactOccurred('medium');
                         }
@@ -132,7 +122,7 @@
             }
         }
 
-        # Запускаем наш скрипт сразу после загрузки страницы
+        // ИСПРАВЛЕНО: Правильный комментарий JavaScript
         window.onload = startEngine;
     </script>
 </body>
