@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Crypto Clicker v2.0</title>
+    <title>Crypto Clicker v4.0</title>
+    
+    <!-- Переместили наверх и добавили принудительную синхронную загрузку -->
     <script src="https://telegram.org"></script>
+    
     <style>
-        /* Блокируем выделение ВЕЗДЕ */
+        /* Жесткое и бескомпромиссное отключение синей рамки и выделений на уровне всех браузеров */
         * {
             -webkit-tap-highlight-color: transparent !important;
             -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
@@ -35,24 +38,24 @@
             box-sizing: border-box;
         }
         #score-text {
-            font-size: 42px;
+            font-size: 46px;
             font-weight: bold;
             color: #ffcc00;
             margin-bottom: 30px;
         }
-        /* Монетка через обычный DIV, так как кнопки BUTTON часто принудительно подсвечиваются операционной системой */
+        /* Обычный блок DIV вместо BUTTON — у него физически нет синей рамки при фокусе */
         #coin-btn {
-            width: 180px;
-            height: 180px;
+            width: 190px;
+            height: 190px;
             background: linear-gradient(145deg, #ffb300, #e68a00);
             border: 6px solid #ffcc00;
             border-radius: 50%;
-            font-size: 80px;
+            font-size: 85px;
             cursor: pointer;
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 12px 20px rgba(255, 153, 0, 0.3);
+            box-shadow: 0 12px 25px rgba(255, 153, 0, 0.35);
             margin: 0 auto;
             transition: transform 0.05s ease;
         }
@@ -65,9 +68,9 @@
             margin-top: 40px;
         }
         #debug-log {
-            color: #ff3333;
-            font-size: 11px;
-            margin-top: 10px;
+            color: #ffaa00;
+            font-size: 12px;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -76,58 +79,61 @@
     <div class="container">
         <div id="score-text">💰 <span id="balance-val">0</span></div>
         <div id="coin-btn">🪙</div>
-        <p class="hint">v2.0 • Тапай по монете</p>
-        <div id="debug-log"></div>
+        <p class="hint">v4.0 • Система перезапущена</p>
+        <div id="debug-log">Загрузка ядра...</div>
     </div>
 
     <script>
         const debug = document.getElementById('debug-log');
+        const balanceDisplay = document.getElementById('balance-val');
+        const coinButton = document.getElementById('coin-btn');
+        
         let currentBalance = 0;
 
-        try {
-            // ИСПРАВЛЕНО: Строго слитное и точное написание объекта Telegram
-            const tg = window.Telegram ? window.Telegram.WebApp : null;
-            
-            if (tg) {
-                tg.ready();
-                tg.expand();
-            } else {
-                debug.style.color = "#ffaa00";
-                debug.innerText = "Предупреждение: Запущено вне Telegram";
-            }
-
-            // Безопасная загрузка баланса
+        // Главная функция, которая запустится в любом случае
+        function startEngine() {
             try {
+                // Загружаем баланс из памяти телефона
                 currentBalance = parseInt(localStorage.getItem('clicker_score')) || 0;
-            } catch(e) {
-                debug.innerText = "Ошибка локальной памяти: " + e.message;
-            }
-            
-            const balanceDisplay = document.getElementById('balance-val');
-            const coinButton = document.getElementById('coin-btn');
+                balanceDisplay.innerText = currentBalance;
+                debug.innerText = "Система активна и готова к тапам!";
 
-            balanceDisplay.innerText = currentBalance;
-
-            // Логика клика
-            coinButton.addEventListener('click', (e) => {
-                try {
-                    // Дополнительный запрет на системный зум и подсветку при тапе
-                    e.preventDefault(); 
-                    
-                    currentBalance++;
-                    balanceDisplay.innerText = currentBalance;
-                    localStorage.setItem('clicker_score', currentBalance);
-                    
-                    // Вибрация
-                    if (tg && tg.HapticFeedback) {
-                        tg.HapticFeedback.impactOccurred('medium');
-                    }
-                } catch(clickErr) {
-                    debug.innerText = "Ошибка при клике: " + clickErr.message;
+                // Пытаемся безопасно подключить Telegram WebApp
+                let tg = null;
+                if (window.Telegram && window.Telegram.WebApp) {
+                    tg = window.Telegram.WebApp;
+                    tg.ready();
+                    tg.expand();
+                    debug.innerText = "Успешно подключено к Telegram!";
+                } else {
+                    debug.innerText = "Работа в автономном режиме браузера";
                 }
-            });
 
-        } catch(mainErr) {
-            debug.innerText = "Критическая ошибка скрипта: " + mainErr.message;
+                // Логика клика (работает ВСЕГДА, даже если Телеграм еще не загрузился)
+                coinButton.onclick = function(e) {
+                    try {
+                        if (e) e.preventDefault();
+                        
+                        currentBalance++;
+                        balanceDisplay.innerText = currentBalance;
+                        localStorage.setItem('clicker_score', currentBalance);
+                        
+                        // Мягкая вибрация
+                        if (tg && tg.HapticFeedback) {
+                            tg.HapticFeedback.impactOccurred('medium');
+                        }
+                    } catch(clickErr) {
+                        debug.innerText = "Ошибка клика: " + clickErr.message;
+                    }
+                };
+
+            } catch(mainErr) {
+                debug.innerText = "Критическая ошибка: " + mainErr.message;
+            }
         }
+
+        # Запускаем наш скрипт сразу после загрузки страницы
+        window.onload = startEngine;
     </script>
+</body>
+</html>
